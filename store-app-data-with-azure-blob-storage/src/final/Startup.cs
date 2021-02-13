@@ -29,7 +29,7 @@ namespace FileUploader
                 return blobStorage;
             });
 
-            services.AddMvc();
+            services.AddMvc(option => option.EnableEndpointRouting = false);
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

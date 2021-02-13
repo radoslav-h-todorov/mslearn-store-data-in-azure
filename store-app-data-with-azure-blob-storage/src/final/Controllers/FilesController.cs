@@ -1,14 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FileUploader.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
 
 namespace FileUploader.Controllers
 {
@@ -16,13 +13,13 @@ namespace FileUploader.Controllers
     public class FilesController : Controller
     {
         private const int MaxFilenameLength = 50;
-        private static readonly Regex filenameRegex = new Regex("[^a-zA-Z0-9._]");
+        private static readonly Regex FilenameRegex = new Regex("[^a-zA-Z0-9._]");
 
-        private readonly IStorage storage;
+        private readonly IStorage _storage;
 
         public FilesController(IStorage storage)
         {
-            this.storage = storage;
+            this._storage = storage;
         }
 
         // GET /api/Files
@@ -31,7 +28,7 @@ namespace FileUploader.Controllers
         [HttpGet()]
         public async Task<IActionResult> Index()
         {
-            var names = await storage.GetNames();
+            var names = await _storage.GetNames();
 
             var baseUrl = Request.Path.Value;
 
@@ -58,7 +55,7 @@ namespace FileUploader.Controllers
 
             using (Stream stream = file.OpenReadStream())
             {
-                await storage.Save(stream, name);
+                await _storage.Save(stream, name);
             }
             
             return Accepted();
@@ -69,7 +66,7 @@ namespace FileUploader.Controllers
         [HttpGet("{filename}")]
         public async Task<IActionResult> Download(string filename)
         {
-            var stream = await storage.Load(filename);
+            var stream = await _storage.Load(filename);
 
             // This usage of File() always triggers the browser to perform a file download.
             // We always use "application/octet-stream" as the content type because we don't record
@@ -79,7 +76,7 @@ namespace FileUploader.Controllers
 
         private static string SanitizeFilename(string filename)
         {
-            var sanitizedFilename = filenameRegex.Replace(filename, "").TrimEnd('.');
+            var sanitizedFilename = FilenameRegex.Replace(filename, "").TrimEnd('.');
 
             if (sanitizedFilename.Length > MaxFilenameLength)
             {

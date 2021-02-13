@@ -14,7 +14,7 @@ namespace FileUploader.Models
 
         public BlobStorage(IOptions<AzureStorageConfig> storageConfig)
         {
-            this._storageConfig = storageConfig.Value;
+            _storageConfig = storageConfig.Value;
         }
 
         public Task Initialize()
