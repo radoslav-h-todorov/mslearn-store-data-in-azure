@@ -1,0 +1,44 @@
+az group create \
+--resource-group mslearn-azurestorage \
+--location westeurope
+
+az storage account create \
+  --kind StorageV2 \
+  --resource-group mslearn-azurestorage \
+  --location centralus \
+  --name mslearnazurestorage
+  
+git clone https://github.com/radoslav-h-todorov/mslearn-store-data-in-azure
+cd mslearn-store-data-in-azure/store-app-data-with-azure-blob-storage/src/final
+
+az appservice plan create \
+--name mslearnplan \
+--resource-group mslearn-azurestorage \
+--sku FREE --location westeurope
+
+az webapp create \
+--name mslearnwebapp2 \
+--plan mslearnplan \
+--resource-group mslearn-azurestorage
+
+CONNECTIONSTRING=$(az storage account show-connection-string \
+--name mslearnazurestorage \
+--output tsv)
+
+az webapp config appsettings set \
+--name mslearnwebapp2 --resource-group mslearn-azurestorage \
+--settings AzureStorageConfig:ConnectionString=$CONNECTIONSTRING AzureStorageConfig:FileContainerName=files
+
+dotnet publish -o pub
+cd pub
+zip -r ../site.zip *
+
+az webapp deployment source config-zip \
+--src ../site.zip \
+--name mslearnwebapp2 \
+--resource-group mslearn-azurestorage
+
+az storage blob list \
+--account-name mslearnazurestorage \
+--container-name files --query [].{Name:name} \
+--output table
