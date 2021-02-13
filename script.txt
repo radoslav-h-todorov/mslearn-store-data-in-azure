@@ -1,32 +1,38 @@
+export RESOURCE_GROUP=mslearn-azurestorage
+export AZURE_REGION=westeurope
+export AZURE_STORAGE_ACCOUNT=mslearnazurestorage
+export AZURE_APP_PLAN=mslearnplan-$RANDOM
+export AZURE_WEB_APP=mslearnwebapp-$RANDOM
+
 az group create \
---resource-group mslearn-azurestorage \
---location westeurope
+--resource-group $RESOURCE_GROUP \
+--location $AZURE_REGION
 
 az storage account create \
   --kind StorageV2 \
-  --resource-group mslearn-azurestorage \
-  --location centralus \
-  --name mslearnazurestorage
+  --resource-group $RESOURCE_GROUP \
+  --location $AZURE_REGION \
+  --name $AZURE_STORAGE_ACCOUNT
   
 git clone https://github.com/radoslav-h-todorov/mslearn-store-data-in-azure
 cd mslearn-store-data-in-azure/store-app-data-with-azure-blob-storage/src/final
 
 az appservice plan create \
---name mslearnplan \
---resource-group mslearn-azurestorage \
---sku FREE --location westeurope
+--name $AZURE_APP_PLAN \
+--resource-group $RESOURCE_GROUP \
+--sku FREE --location $AZURE_REGION
 
 az webapp create \
---name mslearnwebapp2 \
---plan mslearnplan \
---resource-group mslearn-azurestorage
+--name $AZURE_WEB_APP \
+--plan $AZURE_APP_PLAN \
+--resource-group $RESOURCE_GROUP
 
-CONNECTIONSTRING=$(az storage account show-connection-string \
---name mslearnazurestorage \
+export CONNECTIONSTRING=$(az storage account show-connection-string \
+--name $AZURE_STORAGE_ACCOUNT \
 --output tsv)
 
 az webapp config appsettings set \
---name mslearnwebapp2 --resource-group mslearn-azurestorage \
+--name $AZURE_WEB_APP --resource-group $RESOURCE_GROUP \
 --settings AzureStorageConfig:ConnectionString=$CONNECTIONSTRING AzureStorageConfig:FileContainerName=files
 
 dotnet publish -o pub
@@ -35,10 +41,10 @@ zip -r ../site.zip *
 
 az webapp deployment source config-zip \
 --src ../site.zip \
---name mslearnwebapp2 \
---resource-group mslearn-azurestorage
+--name $AZURE_WEB_APP \
+--resource-group $RESOURCE_GROUP
 
 az storage blob list \
---account-name mslearnazurestorage \
+--account-name $AZURE_STORAGE_ACCOUNT \
 --container-name files --query [].{Name:name} \
 --output table
